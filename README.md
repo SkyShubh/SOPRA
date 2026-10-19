@@ -139,8 +139,6 @@ Winner: Java
 - Admin login and role-based access
 - GUI or web front end
 
-## Authors
+## Author
 
-Shubh Pandey | Roll No.: 2502052563 | Course: Object Oriented Programming
-
-Arpit Singh | Roll No.: 2502052568 | Course: Object Oriented Programming
+Your Name | Roll No. | Course / Department

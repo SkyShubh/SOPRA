@@ -1,0 +1,96 @@
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+
+public class Main {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        PollManager pollManager = new PollManager();
+        boolean running = true;
+
+        System.out.println("Welcome to the Secure Polling System!");
+
+        while (running) {
+            System.out.println("\n===== Secure Polling System =====");
+            System.out.println("1. Create Poll");
+            System.out.println("2. Vote");
+            System.out.println("3. View Results");
+            System.out.println("4. Close Poll");
+            System.out.println("5. Exit");
+            System.out.print("Choice: ");
+
+            String input = scanner.nextLine().trim();
+
+            int choice;
+            try {
+                choice = Integer.parseInt(input);
+            } catch (NumberFormatException e) {
+                System.out.println("Error: Please enter a valid numerical choice.");
+                continue;
+            }
+
+            try {
+                switch (choice) {
+                    case 1:
+                        handleCreatePoll(scanner, pollManager);
+                        break;
+                    case 2:
+                        System.out.println("Coming soon: Voting feature will be available in the next release.");
+                        break;
+                    case 3:
+                        System.out.println("Coming soon: Result analysis feature will be available in the next release.");
+                        break;
+                    case 4:
+                        System.out.println("Coming soon: Close poll feature will be available in the next release.");
+                        break;
+                    case 5:
+                        running = false;
+                        System.out.println("Exiting Secure Polling System. Goodbye!");
+                        break;
+                    default:
+                        System.out.println("Invalid choice. Please select an option between 1 and 5.");
+                        break;
+                }
+            } catch (Exception e) {
+                System.out.println("Error: " + e.getMessage());
+            }
+        }
+
+        scanner.close();
+    }
+
+    private static void handleCreatePoll(Scanner scanner, PollManager pollManager) {
+        System.out.print("Question: ");
+        String question = scanner.nextLine().trim();
+
+        if (question.isEmpty()) {
+            throw new IllegalArgumentException("Poll question cannot be empty.");
+        }
+
+        System.out.print("Options (comma separated): ");
+        String rawOptions = scanner.nextLine().trim();
+
+        if (rawOptions.isEmpty()) {
+            throw new IllegalArgumentException("Options cannot be empty.");
+        }
+
+        String[] parts = rawOptions.split(",");
+        List<String> options = new ArrayList<>();
+
+        for (String part : parts) {
+            String trimmed = part.trim();
+            if (!trimmed.isEmpty()) {
+                if (!options.contains(trimmed)) {
+                    options.add(trimmed);
+                }
+            }
+        }
+
+        if (options.size() < 2) {
+            throw new IllegalArgumentException("A poll must have at least 2 distinct options.");
+        }
+
+        Poll poll = pollManager.createPoll(question, options);
+        System.out.println("Poll created with ID: " + poll.getPollId());
+    }
+}
