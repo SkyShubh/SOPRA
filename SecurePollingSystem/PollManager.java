@@ -34,4 +34,10 @@ public class PollManager {
     public HashMap<Integer, Poll> getAllPolls() {
         return polls;
     }
+
+    public void vote(int pollId, String voterId, String option)
+            throws InvalidPollException, DuplicateVoteException, InvalidOptionException {
+        Poll poll = getPoll(pollId);
+        poll.castVote(voterId, option);
+    }
 }

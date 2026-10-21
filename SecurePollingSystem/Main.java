@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Scanner;
 
@@ -35,7 +36,7 @@ public class Main {
                         handleCreatePoll(scanner, pollManager);
                         break;
                     case 2:
-                        System.out.println("Coming soon: Voting feature will be available in the next release.");
+                        handleVote(scanner, pollManager);
                         break;
                     case 3:
                         System.out.println("Coming soon: Result analysis feature will be available in the next release.");
@@ -92,5 +93,26 @@ public class Main {
 
         Poll poll = pollManager.createPoll(question, options);
         System.out.println("Poll created with ID: " + poll.getPollId());
+    }
+
+    private static void handleVote(Scanner scanner, PollManager pollManager) {
+        try {
+            System.out.print("Poll ID: ");
+            String pollIdStr = scanner.nextLine().trim();
+            int pollId = Integer.parseInt(pollIdStr);
+
+            System.out.print("Voter ID: ");
+            String voterId = scanner.nextLine().trim();
+
+            System.out.print("Option: ");
+            String option = scanner.nextLine().trim();
+
+            pollManager.vote(pollId, voterId, option);
+            System.out.println("Vote recorded successfully.");
+        } catch (NumberFormatException | InputMismatchException e) {
+            System.out.println("Error: Poll ID must be a valid number.");
+        } catch (DuplicateVoteException | InvalidOptionException | InvalidPollException | IllegalArgumentException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
     }
 }
