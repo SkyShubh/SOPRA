@@ -17,7 +17,8 @@ public class Main {
             System.out.println("2. Vote");
             System.out.println("3. View Results");
             System.out.println("4. Close Poll");
-            System.out.println("5. Exit");
+            System.out.println("5. List All Polls");
+            System.out.println("6. Exit");
             System.out.print("Choice: ");
 
             String input = scanner.nextLine().trim();
@@ -39,17 +40,20 @@ public class Main {
                         handleVote(scanner, pollManager);
                         break;
                     case 3:
-                        System.out.println("Coming soon: Result analysis feature will be available in the next release.");
+                        handleViewResults(scanner, pollManager);
                         break;
                     case 4:
-                        System.out.println("Coming soon: Close poll feature will be available in the next release.");
+                        handleClosePoll(scanner, pollManager);
                         break;
                     case 5:
+                        handleListAllPolls(pollManager);
+                        break;
+                    case 6:
                         running = false;
                         System.out.println("Exiting Secure Polling System. Goodbye!");
                         break;
                     default:
-                        System.out.println("Invalid choice. Please select an option between 1 and 5.");
+                        System.out.println("Invalid choice. Please select an option between 1 and 6.");
                         break;
                 }
             } catch (Exception e) {
@@ -114,5 +118,38 @@ public class Main {
         } catch (DuplicateVoteException | InvalidOptionException | InvalidPollException | IllegalArgumentException e) {
             System.out.println("Error: " + e.getMessage());
         }
+    }
+
+    private static void handleViewResults(Scanner scanner, PollManager pollManager) {
+        try {
+            System.out.print("Poll ID: ");
+            String pollIdStr = scanner.nextLine().trim();
+            int pollId = Integer.parseInt(pollIdStr);
+
+            pollManager.displayResults(pollId);
+        } catch (NumberFormatException | InputMismatchException e) {
+            System.out.println("Error: Poll ID must be a valid number.");
+        } catch (InvalidPollException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    private static void handleClosePoll(Scanner scanner, PollManager pollManager) {
+        try {
+            System.out.print("Poll ID: ");
+            String pollIdStr = scanner.nextLine().trim();
+            int pollId = Integer.parseInt(pollIdStr);
+
+            pollManager.closePoll(pollId);
+            System.out.println("Poll " + pollId + " has been closed successfully.");
+        } catch (NumberFormatException | InputMismatchException e) {
+            System.out.println("Error: Poll ID must be a valid number.");
+        } catch (InvalidPollException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    private static void handleListAllPolls(PollManager pollManager) {
+        pollManager.listAllPolls();
     }
 }

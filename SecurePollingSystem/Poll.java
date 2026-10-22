@@ -1,7 +1,9 @@
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Poll {
     private int pollId;
@@ -47,6 +49,77 @@ public class Poll {
 
     public void setOpen(boolean isOpen) {
         this.isOpen = isOpen;
+    }
+
+    /**
+     * Closes the poll so that no further votes can be cast.
+     * Throws InvalidPollException if the poll is already closed.
+     */
+    public void closePoll() throws InvalidPollException {
+        if (!isOpen) {
+            throw new InvalidPollException("Poll with ID " + pollId + " is already closed.");
+        }
+        this.isOpen = false;
+    }
+
+    /**
+     * Returns the option-to-vote-count mapping for this poll.
+     */
+    public HashMap<String, Integer> getResults() {
+        return options;
+    }
+
+    /**
+     * Calculates the vote percentage for a specific option based on total votes.
+     * Percentage calculation logic:
+     * - If total votes is 0, returns 0.0 to prevent division by zero (0 / 0).
+     * - Otherwise calculates: (optionVotes / totalVotes) * 100.0.
+     * - Performs case-insensitive matching to find the option's vote count.
+     */
+    public double getPercentage(String option) {
+        int totalVotes = getTotalVotes();
+        if (totalVotes == 0 || option == null) {
+            return 0.0;
+        }
+        String cleanOption = option.trim();
+        for (Map.Entry<String, Integer> entry : options.entrySet()) {
+            if (entry.getKey().equalsIgnoreCase(cleanOption)) {
+                return ((double) entry.getValue() / totalVotes) * 100.0;
+            }
+        }
+        return 0.0;
+    }
+
+    /**
+     * Finds the winning option(s) with the highest number of votes.
+     * Tie-detection logic:
+     * - If total votes is 0, no votes have been cast, so an empty list is returned.
+     * - Iterates over all vote counts in the options map to find the maximum count (maxVotes).
+     * - Gathers all options that have a vote count equal to maxVotes into the winners list.
+     * - If more than one option shares this maximum count, all tied options are returned.
+     */
+    public List<String> getWinners() {
+        List<String> winners = new ArrayList<>();
+        if (getTotalVotes() == 0) {
+            return winners;
+        }
+
+        int maxVotes = -1;
+        for (int votes : options.values()) {
+            if (votes > maxVotes) {
+                maxVotes = votes;
+            }
+        }
+
+        if (maxVotes > 0) {
+            for (Map.Entry<String, Integer> entry : options.entrySet()) {
+                if (entry.getValue() == maxVotes) {
+                    winners.add(entry.getKey());
+                }
+            }
+        }
+
+        return winners;
     }
 
     /**
