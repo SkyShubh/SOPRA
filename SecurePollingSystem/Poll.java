@@ -1,3 +1,4 @@
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -5,13 +6,31 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class Poll {
+/**
+ * Represents a single poll within the Secure Online Polling System.
+ * Encapsulates the poll question, available voting options and their respective vote counts,
+ * the set of cryptographically hashed voter IDs to enforce duplicate-vote prevention securely,
+ * and the open/closed status of the poll.
+ * Implements {@link Serializable} for file persistence.
+ */
+public class Poll implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     private int pollId;
     private String question;
     private HashMap<String, Integer> options;
     private HashSet<String> voters;
     private boolean isOpen;
 
+    /**
+     * Constructs a new Poll with the specified ID, question, and candidate options.
+     * Initializes all candidate options with zero votes and marks the poll as open.
+     *
+     * @param pollId     unique integer identifier for this poll
+     * @param question   the polling question text
+     * @param optionList list of available options for this poll
+     */
     public Poll(int pollId, String question, List<String> optionList) {
         this.pollId = pollId;
         this.question = question;
@@ -27,33 +46,64 @@ public class Poll {
         this.isOpen = true;
     }
 
+    /**
+     * Returns the unique identifier of this poll.
+     *
+     * @return poll ID
+     */
     public int getPollId() {
         return pollId;
     }
 
+    /**
+     * Returns the question associated with this poll.
+     *
+     * @return poll question
+     */
     public String getQuestion() {
         return question;
     }
 
+    /**
+     * Returns the map of option names and their current vote counts.
+     *
+     * @return map of options to vote counts
+     */
     public HashMap<String, Integer> getOptions() {
         return options;
     }
 
+    /**
+     * Returns the set of hashed voter IDs that have cast a vote in this poll.
+     *
+     * @return set of SHA-256 voter ID hashes
+     */
     public HashSet<String> getVoters() {
         return voters;
     }
 
+    /**
+     * Checks if this poll is currently open for voting.
+     *
+     * @return true if the poll is open, false otherwise
+     */
     public boolean isOpen() {
         return isOpen;
     }
 
+    /**
+     * Sets the open/closed status of this poll.
+     *
+     * @param isOpen true to open the poll, false to close it
+     */
     public void setOpen(boolean isOpen) {
         this.isOpen = isOpen;
     }
 
     /**
      * Closes the poll so that no further votes can be cast.
-     * Throws InvalidPollException if the poll is already closed.
+     *
+     * @throws InvalidPollException if the poll is already closed
      */
     public void closePoll() throws InvalidPollException {
         if (!isOpen) {
@@ -64,17 +114,22 @@ public class Poll {
 
     /**
      * Returns the option-to-vote-count mapping for this poll.
+     *
+     * @return map containing each option and its current vote tally
      */
     public HashMap<String, Integer> getResults() {
         return options;
     }
 
     /**
-     * Calculates the vote percentage for a specific option based on total votes.
+     * Calculates the vote percentage for a specific option based on total votes cast.
      * Percentage calculation logic:
-     * - If total votes is 0, returns 0.0 to prevent division by zero (0 / 0).
+     * - If total votes is 0, returns 0.0 to prevent division by zero.
      * - Otherwise calculates: (optionVotes / totalVotes) * 100.0.
      * - Performs case-insensitive matching to find the option's vote count.
+     *
+     * @param option the candidate option name
+     * @return percentage of total votes received (0.0 to 100.0)
      */
     public double getPercentage(String option) {
         int totalVotes = getTotalVotes();
@@ -93,10 +148,12 @@ public class Poll {
     /**
      * Finds the winning option(s) with the highest number of votes.
      * Tie-detection logic:
-     * - If total votes is 0, no votes have been cast, so an empty list is returned.
-     * - Iterates over all vote counts in the options map to find the maximum count (maxVotes).
-     * - Gathers all options that have a vote count equal to maxVotes into the winners list.
+     * - If total votes is 0, returns an empty list.
+     * - Iterates over all vote counts in the options map to find the maximum count.
+     * - Gathers all options sharing this maximum count into the winners list.
      * - If more than one option shares this maximum count, all tied options are returned.
+     *
+     * @return list of winning option names, or empty list if no votes have been cast
      */
     public List<String> getWinners() {
         List<String> winners = new ArrayList<>();
@@ -123,13 +180,22 @@ public class Poll {
     }
 
     /**
-     * Casts a vote in the poll.
-     * Duplicate prevention logic:
-     * - Each poll maintains a HashSet of unique voter IDs (voters).
-     * - HashSet provides O(1) average-time lookups and uniqueness guarantees.
-     * - We check if the voter already exists and use HashSet.add()'s boolean return
-     *   (which returns true if the element was added, false if already present)
-     *   to prevent the same voter from voting multiple times in this poll.
+     * Casts a vote in the poll with voter privacy protection and duplicate prevention.
+     * Security and duplicate prevention logic:
+     * - Verifies that the poll is currently open.
+     * - Validates that the voter ID is not null or blank.
+     * - Securely hashes the normalized (trimmed and lowercase) voter ID with SHA-256 via {@link HashUtil}.
+     * - Checks if the SHA-256 hash already exists in the voters {@link HashSet}.
+     * - Ensures the chosen option exists in the poll options map (case-insensitive).
+     * - Records the hashed voter ID using {@code HashSet.add()} which guarantees O(1) duplicate prevention.
+     * - Increments the vote tally for the matched option.
+     *
+     * @param voterId the raw voter ID string provided by the user
+     * @param option  the option selected by the voter
+     * @throws DuplicateVoteException   if this voter has already voted in this poll
+     * @throws InvalidOptionException   if the option does not exist in this poll
+     * @throws InvalidPollException     if the poll is closed
+     * @throws IllegalArgumentException if voterId or option is empty
      */
     public void castVote(String voterId, String option)
             throws DuplicateVoteException, InvalidOptionException, InvalidPollException {
@@ -144,8 +210,13 @@ public class Poll {
         }
         String cleanVoterId = voterId.trim();
 
+        // Secure Voter ID Hashing:
+        // Hash the voter ID with SHA-256. HashUtil normalizes (trim + lowercase)
+        // so "S1001", "s1001", and " S1001 " yield the exact same SHA-256 hash.
+        String hashedVoterId = HashUtil.hash(cleanVoterId);
+
         // Validation c: Check if voter has already voted in this poll using HashSet
-        if (voters.contains(cleanVoterId)) {
+        if (voters.contains(hashedVoterId)) {
             throw new DuplicateVoteException("Voter '" + cleanVoterId + "' has already voted in this poll.");
         }
 
@@ -166,9 +237,9 @@ public class Poll {
         }
 
         // Duplicate prevention logic:
-        // Use the boolean returned by HashSet.add() to record the voter.
-        // Returns false if the voterId is already present in the set.
-        boolean added = voters.add(cleanVoterId);
+        // Use the boolean returned by HashSet.add() to record the hashed voter ID.
+        // Returns false if the hashed ID is already present in the set.
+        boolean added = voters.add(hashedVoterId);
         if (!added) {
             throw new DuplicateVoteException("Voter '" + cleanVoterId + "' has already voted in this poll.");
         }
@@ -179,6 +250,8 @@ public class Poll {
 
     /**
      * Returns the total number of votes cast in this poll.
+     *
+     * @return total vote count
      */
     public int getTotalVotes() {
         return voters.size();

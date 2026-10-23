@@ -2,3 +2,6 @@
 .idea/
 *.iml
 out/
+polls.dat
+polls.txt
+*.dat
