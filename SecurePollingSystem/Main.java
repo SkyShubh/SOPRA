@@ -198,7 +198,8 @@ public class Main {
             int pollId = readPositiveInt(scanner, "Poll ID");
 
             Poll poll = pollManager.getPoll(pollId);
-            System.out.print("Are you sure you want to delete poll " + pollId + " (\"" + poll.getQuestion() + "\")? (y/n): ");
+            System.out.print(
+                    "Are you sure you want to delete poll " + pollId + " (\"" + poll.getQuestion() + "\")? (y/n): ");
             String confirmation = scanner.nextLine().trim();
 
             if (confirmation.equalsIgnoreCase("y") || confirmation.equalsIgnoreCase("yes")) {
