@@ -2,26 +2,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-/**
- * Entry point for the Secure Online Polling & Result Analysis System (SOPRA).
- * Provides an interactive, validated console-based menu interface for poll administration,
- * voting, search, result analytics, and persistent storage management.
- */
+// Main console menu and user input handler
 public class Main {
 
-    /**
-     * Main application loop. Loads saved poll data on startup, processes user menu selections,
-     * validates all user inputs, and persists poll data upon exit.
-     *
-     * @param args command-line arguments (unused)
-     */
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         PollManager pollManager = new PollManager();
 
         System.out.println("Welcome to the Secure Online Polling & Result Analysis System!");
-
-        // Load persisted polls from storage file at startup
         pollManager.loadData();
 
         boolean running = true;
@@ -31,7 +19,6 @@ public class Main {
             System.out.print("Choice: ");
 
             String input = scanner.nextLine().trim();
-
             int choice;
             try {
                 choice = Integer.parseInt(input);
@@ -61,7 +48,7 @@ public class Main {
                         handleDeletePoll(scanner, pollManager);
                         break;
                     case 7:
-                        handleListAllPolls(pollManager);
+                        pollManager.listAllPolls();
                         break;
                     case 8:
                         handleSearchPolls(scanner, pollManager);
@@ -82,9 +69,6 @@ public class Main {
         scanner.close();
     }
 
-    /**
-     * Prints the primary console interactive menu with consistent headings and spacing.
-     */
     private static void printMenu() {
         System.out.println("\n===== Secure Polling System =====");
         System.out.println("1. Create Poll");
@@ -98,12 +82,6 @@ public class Main {
         System.out.println("9. Exit");
     }
 
-    /**
-     * Handles creating a new poll. Validates question non-emptiness and requires at least two distinct options.
-     *
-     * @param scanner     input scanner for reading user responses
-     * @param pollManager active {@link PollManager} instance
-     */
     private static void handleCreatePoll(Scanner scanner, PollManager pollManager) {
         System.out.print("Question: ");
         String question = scanner.nextLine().trim();
@@ -127,15 +105,14 @@ public class Main {
         for (String part : parts) {
             String trimmed = part.trim();
             if (!trimmed.isEmpty()) {
-                // Ensure distinct options (case-insensitive check)
-                boolean alreadyPresent = false;
+                boolean exists = false;
                 for (String existing : options) {
                     if (existing.equalsIgnoreCase(trimmed)) {
-                        alreadyPresent = true;
+                        exists = true;
                         break;
                     }
                 }
-                if (!alreadyPresent) {
+                if (!exists) {
                     options.add(trimmed);
                 }
             }
@@ -150,13 +127,6 @@ public class Main {
         System.out.println("Poll created with ID: " + poll.getPollId());
     }
 
-    /**
-     * Handles voting on an active poll. Collects poll ID, voter ID, and chosen option,
-     * forwarding them to {@link PollManager} where voter ID hashing and duplicate checks take place.
-     *
-     * @param scanner     input scanner
-     * @param pollManager active {@link PollManager} instance
-     */
     private static void handleVote(Scanner scanner, PollManager pollManager) {
         try {
             System.out.print("Poll ID: ");
@@ -185,12 +155,6 @@ public class Main {
         }
     }
 
-    /**
-     * Handles displaying comprehensive poll results and analytics (percentages, total, winner/tie).
-     *
-     * @param scanner     input scanner
-     * @param pollManager active {@link PollManager} instance
-     */
     private static void handleViewResults(Scanner scanner, PollManager pollManager) {
         try {
             System.out.print("Poll ID: ");
@@ -203,12 +167,6 @@ public class Main {
         }
     }
 
-    /**
-     * Handles displaying option vote counts for a single poll.
-     *
-     * @param scanner     input scanner
-     * @param pollManager active {@link PollManager} instance
-     */
     private static void handleViewOptionVotes(Scanner scanner, PollManager pollManager) {
         try {
             System.out.print("Poll ID: ");
@@ -221,12 +179,6 @@ public class Main {
         }
     }
 
-    /**
-     * Handles closing a poll so no further votes can be cast.
-     *
-     * @param scanner     input scanner
-     * @param pollManager active {@link PollManager} instance
-     */
     private static void handleClosePoll(Scanner scanner, PollManager pollManager) {
         try {
             System.out.print("Poll ID: ");
@@ -240,20 +192,12 @@ public class Main {
         }
     }
 
-    /**
-     * Handles deleting a poll by ID after prompting the user for explicit confirmation (y/n).
-     *
-     * @param scanner     input scanner
-     * @param pollManager active {@link PollManager} instance
-     */
     private static void handleDeletePoll(Scanner scanner, PollManager pollManager) {
         try {
             System.out.print("Poll ID to delete: ");
             int pollId = readPositiveInt(scanner, "Poll ID");
 
-            // Verify the poll exists before asking for confirmation
             Poll poll = pollManager.getPoll(pollId);
-
             System.out.print("Are you sure you want to delete poll " + pollId + " (\"" + poll.getQuestion() + "\")? (y/n): ");
             String confirmation = scanner.nextLine().trim();
 
@@ -270,21 +214,6 @@ public class Main {
         }
     }
 
-    /**
-     * Lists all registered polls.
-     *
-     * @param pollManager active {@link PollManager} instance
-     */
-    private static void handleListAllPolls(PollManager pollManager) {
-        pollManager.listAllPolls();
-    }
-
-    /**
-     * Handles searching for polls whose question text contains a keyword (case-insensitive).
-     *
-     * @param scanner     input scanner
-     * @param pollManager active {@link PollManager} instance
-     */
     private static void handleSearchPolls(Scanner scanner, PollManager pollManager) {
         System.out.print("Enter search keyword: ");
         String keyword = scanner.nextLine().trim();
@@ -295,7 +224,6 @@ public class Main {
         }
 
         List<Poll> matches = pollManager.searchPolls(keyword);
-
         if (matches.isEmpty()) {
             System.out.println("No polls found matching keyword: \"" + keyword + "\".");
             return;
@@ -311,11 +239,6 @@ public class Main {
         System.out.println("------------------------------------------------------------");
     }
 
-    /**
-     * Handles saving data to persistent storage and gracefully exiting the application.
-     *
-     * @param pollManager active {@link PollManager} instance
-     */
     private static void handleExit(PollManager pollManager) {
         try {
             pollManager.saveData();
@@ -326,19 +249,9 @@ public class Main {
         System.out.println("Exiting Secure Polling System. Goodbye!");
     }
 
-    /**
-     * Helper method to read and validate a positive integer from the scanner.
-     * Avoids Scanner newline-skipping bugs by always reading full lines via {@code nextLine()}.
-     *
-     * @param scanner   input scanner
-     * @param fieldName descriptive field name for error reporting
-     * @return valid positive integer
-     * @throws IllegalArgumentException if the number is less than or equal to 0
-     * @throws NumberFormatException    if the input cannot be parsed as an integer
-     */
+    // Reads and validates a positive whole number
     private static int readPositiveInt(Scanner scanner, String fieldName) {
-        String input = scanner.nextLine().trim();
-        int value = Integer.parseInt(input);
+        int value = Integer.parseInt(scanner.nextLine().trim());
         if (value <= 0) {
             throw new IllegalArgumentException(fieldName + " must be a positive integer.");
         }
